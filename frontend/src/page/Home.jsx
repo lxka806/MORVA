@@ -115,10 +115,13 @@ const Home = () => {
                 </p>
 
                 <div className="flex flex-wrap items-center gap-4 pt-2 ">
-                    <button className="group px-8 py-3.5 bg-[#111111] text-white rounded-full font-medium hover:bg-[#2a2a2a] transition-all hover:shadow-lg hover:-translate-y-0.5 flex items-center gap-2">
-                        translate now
-                    <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
-                    </button>
+                    <Link to="/translate">
+                        <button className="group px-8 py-3.5 bg-[#111111] text-white rounded-full font-medium hover:bg-[#2a2a2a] transition-all hover:shadow-lg hover:-translate-y-0.5 flex items-center gap-2">
+                            translate now
+                            <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+                        </button>
+                    </Link>
+                    <link />
                     <Link to="/about">
                         <button className="px-8 py-3.5 border border-gray-200 rounded-full font-medium text-gray-700 hover:bg-gray-50 hover:border-gray-300 transition-all hover:-translate-y-0.5">
                             Explore MORVA
@@ -319,8 +322,7 @@ const Home = () => {
                 <div className="mt-5 bg-gray-50/80 rounded-2xl p-5 border border-gray-100">
                     <div className="flex justify-between items-center">
                     <div>
-                        <p className="text-2xl font-bold text-gray-800">MORVA TEXT </p>
-                        <p className="text-sm text-gray-500">/a.pʁɑ̃dʁ/</p>
+                        <p className="text-2xl font-bold text-gray-800 cipher">TO learn</p>
                         <p className="text-sm text-gray-600 mt-1">to learn</p>
                     </div>
                     <div className="text-right">
@@ -487,10 +489,12 @@ const Home = () => {
                 <h2 className="text-4xl md:text-5xl lg:text-6xl font-bold tracking-tight">Ready to start learning?</h2>
                 <p className="text-gray-500 text-lg mt-4 max-w-lg mx-auto">Create your free MORVA account and start building your learning habit today.</p>
                 <div className="mt-8 flex flex-col sm:flex-row items-center justify-center gap-4">
-                <button className="px-10 py-4 bg-[#111111] text-white rounded-full font-medium hover:bg-[#2a2a2a] transition-all hover:shadow-lg hover:-translate-y-0.5 flex items-center gap-2 text-lg">
-                    Get Started Free
-                    <ArrowRight className="w-5 h-5" />
-                </button>
+                <Link to="/learning">
+                    <button className="px-10 py-4 bg-[#111111] text-white rounded-full font-medium hover:bg-[#2a2a2a] transition-all hover:shadow-lg hover:-translate-y-0.5 flex items-center gap-2 text-lg">
+                        Get Started Free
+                        <ArrowRight className="w-5 h-5" />
+                    </button>
+                </Link>
                 </div>
                 <p className="text-sm text-gray-400 mt-4">No credit card required.</p>
             </div>

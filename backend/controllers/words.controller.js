@@ -79,17 +79,21 @@ const getWord = async (req, res) => {
 const editWords = async (req, res) => {
     try {
         const { id } = req.params;
-        const { word, difficulty } = req.body;
+        const { word, difficulty, learned, favorite } = req.body;
+
+        const updateFields = {};
+
+        if (typeof word !== "undefined") updateFields.word = word.trim ? word.trim() : word;
+        if (typeof difficulty !== "undefined") updateFields.difficulty = difficulty;
+        if (typeof learned !== "undefined") updateFields.learned = learned;
+        if (typeof favorite !== "undefined") updateFields.favorite = favorite;
 
         const editedWord = await Words.findOneAndUpdate(
             {
                 _id: id,
                 owner: req.user._id
             },
-            {
-                word,
-                difficulty
-            },
+            updateFields,
             {
                 new: true,
                 runValidators: true

@@ -1,4 +1,5 @@
 const Auth = require("../models/auth.model")
+const Word = require("../models/words.model")
 const bcrypt = require("bcrypt")
 const JWT = require("jsonwebtoken")
 
@@ -14,16 +15,16 @@ const cookieOptions = {
 
 const register = async (req, res) => {
     try {
-        const { name, email, password } = req.body
+        const { name, username, email, password } = req.body
 
-        if (!name || !email || !password) {
+        if (!name || !username || !email || !password) {
             return res.status(400).json({
                 message: "All fields are required"
             })
         }
 
         const usedEmail = await Auth.findOne({ email })
-        const usedUserName = await Auth.findOne({ name })
+        const usedUserName = await Auth.findOne({ username })
 
         if (usedEmail) {
             return res.status(400).json({
@@ -34,7 +35,7 @@ const register = async (req, res) => {
         
         if (usedUserName) {
             return res.status(400).json({
-                message: "Name is already used"
+                message: "Username is already used"
             })
         }
 
@@ -42,6 +43,7 @@ const register = async (req, res) => {
 
         const user = await Auth.create({
             name,
+            username,
             email,
             password: hashpassword
         })
@@ -63,7 +65,9 @@ const register = async (req, res) => {
             user: {
                 id: user._id,
                 name: user.name,
-                email: user.email
+                username: user.username,
+                email: user.email,
+                xp: user.xp || 0
             }
         })
 
@@ -77,21 +81,29 @@ const register = async (req, res) => {
 }
 const login = async (req, res) => {
     try {
-        const { email, password } = req.body
+        const { email, username, password } = req.body
 
-        if (!email || !password) {
+        const normalizedEmail = typeof email === "string" ? email.toLowerCase().trim() : ""
+        const normalizedUsername = typeof username === "string" ? username.trim() : ""
+
+        if ((!normalizedEmail && !normalizedUsername) || !password) {
             return res.status(400).json({
-                message: "All fields are required"
+                message: "Email or username and password are required"
             })
         }
 
         const user = await Auth
-            .findOne({ email: email.toLowerCase().trim() })
+            .findOne({
+                $or: [
+                    { email: normalizedEmail || undefined },
+                    { username: normalizedUsername || undefined }
+                ]
+            })
             .select("+password")
 
         if (!user) {
             return res.status(400).json({
-                message: "Wrong email or password"
+                message: "Wrong email, username or password"
             })
         }
 
@@ -123,7 +135,9 @@ const login = async (req, res) => {
             user: {
                 id: user._id,
                 name: user.name,
-                email: user.email
+                username: user.username,
+                email: user.email,
+                xp: user.xp || 0
             }
         })
 
@@ -150,7 +164,7 @@ const me = async (req, res) => {
         }
 
         return res.status(200).json({
-            user: { id: user._id, name: user.name, email: user.email }
+            user: { id: user._id, name: user.name, username: user.username, email: user.email, xp: user.xp || 0 }
         })
     } catch (e) {
         return res.status(401).json({ message: "Not authenticated" })
@@ -166,9 +180,47 @@ const logout = (req, res) => {
     })
     return res.status(200).json({ message: "Logged out" })
 }
+
+const getLeaderboard = async (req, res) => {
+    try {
+        const users = await Auth.find({}, { name: 1, username: 1, xp: 1, createdAt: 1 }).sort({ xp: -1, createdAt: -1 })
+
+        const leaderboard = await Promise.all(
+            users.map(async (user) => {
+                const [totalWords, learnedWords] = await Promise.all([
+                    Word.countDocuments({ owner: user._id }),
+                    Word.countDocuments({ owner: user._id, learned: true })
+                ])
+
+                return {
+                    id: user._id,
+                    name: user.name,
+                    username: user.username,
+                    xp: user.xp || 0,
+                    totalWords,
+                    learnedWords
+                }
+            })
+        )
+
+        const sortedLeaderboard = leaderboard
+            .sort((a, b) => b.learnedWords - a.learnedWords || b.totalWords - a.totalWords || b.xp - a.xp)
+            .map((user, index) => ({ ...user, rank: index + 1 }))
+
+        return res.status(200).json(sortedLeaderboard)
+    } catch (e) {
+        console.log(e.message)
+
+        return res.status(500).json({
+            message: "Something went wrong"
+        })
+    }
+}
+
 module.exports = {
     register,
     login,
     me,
-    logout
+    logout,
+    getLeaderboard
 }

@@ -5,7 +5,6 @@ import {
     Home,
     BookOpen,
     Trophy,
-    ClipboardList,
     Book,
     LogIn,
     UserPlus,
@@ -63,15 +62,6 @@ function NavBar() {
                         >
                             <Trophy size={18} />
                             <span>Leaderboard</span>
-                        </Link>
-
-
-                        <Link
-                            to="/quiz"
-                            className="flex items-center gap-2 px-3 py-2 rounded-lg text-[#77736A] hover:bg-[#F5F1E8] hover:text-[#111111] transition"
-                        >
-                            <ClipboardList size={18} />
-                            <span>Quiz</span>
                         </Link>
 
                         <Link

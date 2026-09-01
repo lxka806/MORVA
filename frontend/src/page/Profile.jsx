@@ -10,8 +10,8 @@ import {
     Pencil,
     BookOpen,
     Brain,
-    Trophy,
     Languages,
+    Trophy
 } from "lucide-react";
 
 function Profile() {
@@ -36,6 +36,7 @@ function Profile() {
         return <Navigate to="/login" replace />;
     }
 
+    const username = user?.username || user?.userName || "user";
     const firstLetter = user.name?.charAt(0).toUpperCase() || "U";
 
     return (
@@ -63,6 +64,9 @@ function Profile() {
                                 <h1 className="text-3xl font-bold tracking-tight">
                                     {user.name}
                                 </h1>
+                                <p className="text-sm text-blue-200 mt-1">
+                                    @{username}
+                                </p>
 
                                 <p className="text-sm text-gray-400 mt-1">
                                     {user.email}
@@ -134,6 +138,25 @@ function Profile() {
 
                             </div>
 
+
+                            {/* USERNAME */}
+                            <div className="flex items-center gap-4 py-4 border-b border-gray-100">
+
+                                <div className="w-10 h-10 rounded-xl bg-gray-50 flex items-center justify-center">
+                                    <User className="w-5 h-5 text-gray-400" />
+                                </div>
+
+                                <div className="min-w-0">
+                                    <p className="text-xs text-gray-400 uppercase tracking-wider">
+                                        Username
+                                    </p>
+
+                                    <p className="font-medium mt-1 truncate">
+                                        @{username}
+                                    </p>
+                                </div>
+
+                            </div>
 
                             {/* EMAIL */}
                             <div className="flex items-center gap-4 py-4">
@@ -293,13 +316,6 @@ function Profile() {
                                     Profile
                                 </h2>
 
-                                <button
-                                    className="p-2 rounded-lg hover:bg-gray-100 transition"
-                                    title="Edit profile"
-                                >
-                                    <Pencil className="w-4 h-4 text-gray-400" />
-                                </button>
-
                             </div>
 
 
@@ -320,7 +336,7 @@ function Profile() {
                             </div>
 
 
-                            <div className="mt-6 pt-5 border-t border-gray-100">
+                            <div className="mt-6 pt-5 border-t border-gray-100 space-y-4">
 
                                 <div className="flex items-center justify-center gap-2">
 
@@ -332,49 +348,6 @@ function Profile() {
 
                                 </div>
 
-                            </div>
-
-                        </section>
-
-
-                        {/* ACCOUNT SETTINGS */}
-                        <section className="bg-white border border-gray-200 rounded-3xl p-6">
-
-                            <div className="flex items-center gap-2 mb-4">
-
-                                <Settings className="w-4 h-4 text-gray-400" />
-
-                                <h2 className="font-bold text-sm">
-                                    Account settings
-                                </h2>
-
-                            </div>
-
-
-                            <div className="space-y-1">
-
-                                <button className="w-full flex items-center justify-between px-3 py-3 rounded-xl hover:bg-gray-50 transition text-sm text-left">
-
-                                    <div className="flex items-center gap-3">
-                                        <Pencil className="w-4 h-4 text-gray-400" />
-                                        <span>Edit profile</span>
-                                    </div>
-
-                                    <ChevronRight className="w-4 h-4 text-gray-300" />
-
-                                </button>
-
-
-                                <button className="w-full flex items-center justify-between px-3 py-3 rounded-xl hover:bg-gray-50 transition text-sm text-left">
-
-                                    <div className="flex items-center gap-3">
-                                        <Settings className="w-4 h-4 text-gray-400" />
-                                        <span>Settings</span>
-                                    </div>
-
-                                    <ChevronRight className="w-4 h-4 text-gray-300" />
-
-                                </button>
 
                             </div>
 

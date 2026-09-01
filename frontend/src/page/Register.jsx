@@ -10,6 +10,7 @@ function Register() {
     const { login } = useAuth();
 
     const [name, setName] = useState("");
+    const [username, setUsername] = useState("");
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
     const [confirmPassword, setConfirmPassword] = useState("");
@@ -49,6 +50,7 @@ function Register() {
                 credentials: "include",
                 body: JSON.stringify({
                     name,
+                    username,
                     email,
                     password
                 })
@@ -120,6 +122,30 @@ function Register() {
                                 />
                             </div>
                         </div>
+                        
+
+                        <div>
+                            <label htmlFor="username" className="block text-sm font-medium text-gray-700 mb-1.5">
+                                Username
+                            </label>
+                            <div className="relative">
+                                <div className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400">
+                                    <User className="w-5 h-5" />
+                                </div>
+                                <input
+                                    id="username"
+                                    type="text"
+                                    placeholder="john_doe"
+                                    value={username}
+                                    onChange={(e) => setUsername(e.target.value)}
+                                    className="w-full pl-11 pr-4 py-3 rounded-xl border border-gray-200 bg-gray-50/50 focus:bg-white focus:border-blue-400 focus:ring-4 focus:ring-blue-500/10 transition-all outline-none placeholder:text-gray-400 text-sm"
+                                    required
+                                    autoFocus
+                                    disabled={isLoading}
+                                />
+                            </div>
+                        </div>
+
 
                         {/* Email */}
                         <div>

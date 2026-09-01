@@ -2,9 +2,9 @@ import { Routes, Route } from "react-router-dom"
 
 import Home from "./page/Home"
 import Learning from "./page/Learning"
+import Lesson from "./page/Lesson"
 import LiderBoard from "./page/LiderBoard"
 import Login from "./page/Login"
-import Quiz from "./page/Quiz"
 import Register from "./page/Register"
 import Words from "./page/Words"
 import Profile from "./page/Profile"
@@ -20,9 +20,9 @@ function App() {
                 <Routes>
                     <Route path="/" element={<Home />} />
                     <Route path="/learning" element={<Learning />} />
+                    <Route path="/learning/lesson/:id" element={<Lesson />} />
                     <Route path="/liderBoard" element={<LiderBoard />} />
                     <Route path="/login" element={<Login />} />
-                    <Route path="/quiz" element={<Quiz />} />
                     <Route path="/register" element={<Register />} />
                     <Route path="/words" element={<Words />} />
                     <Route path="/translate" element={<Translate />} />

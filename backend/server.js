@@ -7,6 +7,7 @@ const cors = require("cors")
 
 const authRouter = require("./routers/auth.route")
 const wordsRoute = require("./routers/words.route");
+const learningRoute = require("./routers/learning.route");
 
 const app = express()
 
@@ -20,6 +21,7 @@ app.use(cors({
 }));
 app.use("/api/auth", authRouter)
 app.use("/api/words", wordsRoute);
+app.use("/api/learning", learningRoute);
 
 mongoose.connect(process.env.MONGODB_URL)
     .then(() => {

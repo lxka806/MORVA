@@ -322,7 +322,7 @@ const Home = () => {
                 <div className="mt-5 bg-gray-50/80 rounded-2xl p-5 border border-gray-100">
                     <div className="flex justify-between items-center">
                     <div>
-                        <p className="text-2xl font-bold text-gray-800 cipher">TO learn</p>
+                        <p className="text-1xl font-bold text-gray-800 cipher">to learn</p>
                         <p className="text-sm text-gray-600 mt-1">to learn</p>
                     </div>
                     <div className="text-right">

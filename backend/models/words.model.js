@@ -35,4 +35,7 @@ const wordSchema = new mongoose.Schema(
     }
 );
 
+wordSchema.index({ owner: 1, createdAt: -1, _id: -1 });
+wordSchema.index({ owner: 1, learned: 1 });
+
 module.exports = mongoose.model("Word", wordSchema);

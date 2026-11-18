@@ -2,6 +2,7 @@ const Auth = require("../models/auth.model")
 const Word = require("../models/words.model")
 const bcrypt = require("bcrypt")
 const JWT = require("jsonwebtoken")
+const validator = require("validator")
 
 const isProduction = process.env.NODE_ENV === "production"
 
@@ -15,36 +16,33 @@ const cookieOptions = {
 
 const register = async (req, res) => {
     try {
-        const { name, username, email, password } = req.body
+        const { name, username, email, password } = req.body || {}
+        const normalizedName = typeof name === "string" ? name.trim() : ""
+        const normalizedUsername = typeof username === "string" ? username.trim() : ""
+        const normalizedEmail = typeof email === "string" ? email.trim().toLowerCase() : ""
 
-        if (!name || !username || !email || !password) {
+        if (!normalizedName || !normalizedUsername || !normalizedEmail || typeof password !== "string" || !password) {
             return res.status(400).json({
                 message: "All fields are required"
             })
         }
-
-        const usedEmail = await Auth.findOne({ email })
-        const usedUserName = await Auth.findOne({ username })
-
-        if (usedEmail) {
+        if (normalizedName.length < 2 || normalizedName.length > 50
+            || normalizedUsername.length < 2 || normalizedUsername.length > 50
+            || password.length < 8 || password.length > 100) {
             return res.status(400).json({
-                message: "Email is already used"
+                message: "Name, username, or password does not meet the length requirements"
             })
         }
-
-        
-        if (usedUserName) {
-            return res.status(400).json({
-                message: "Username is already used"
-            })
+        if (!validator.isEmail(normalizedEmail)) {
+            return res.status(400).json({ message: "Please provide email with valid form" })
         }
 
         const hashpassword = await bcrypt.hash(password, 10)
 
         const user = await Auth.create({
-            name,
-            username,
-            email,
+            name: normalizedName,
+            username: normalizedUsername,
+            email: normalizedEmail,
             password: hashpassword
         })
 
@@ -72,7 +70,22 @@ const register = async (req, res) => {
         })
 
     } catch (e) {
-        console.log(e.message)
+        if (e.code === 11000) {
+            const duplicateField = Object.keys(e.keyPattern || e.keyValue || {})[0]
+            const message = duplicateField === "username"
+                ? "Username is already used"
+                : duplicateField === "email"
+                    ? "Email is already used"
+                    : "Email or username is already used"
+
+            return res.status(400).json({ message })
+        }
+
+        if (e.name === "ValidationError") {
+            return res.status(400).json({ message: e.message })
+        }
+
+        console.error(e.message)
 
         return res.status(500).json({
             message: "Something went wrong"
@@ -81,25 +94,25 @@ const register = async (req, res) => {
 }
 const login = async (req, res) => {
     try {
-        const { email, username, password } = req.body
+        const { email, username, password } = req.body || {}
 
         const normalizedEmail = typeof email === "string" ? email.toLowerCase().trim() : ""
         const normalizedUsername = typeof username === "string" ? username.trim() : ""
 
-        if ((!normalizedEmail && !normalizedUsername) || !password) {
+        if ((!normalizedEmail && !normalizedUsername) || typeof password !== "string" || !password) {
             return res.status(400).json({
                 message: "Email or username and password are required"
             })
         }
 
-        const user = await Auth
-            .findOne({
-                $or: [
-                    { email: normalizedEmail || undefined },
-                    { username: normalizedUsername || undefined }
-                ]
-            })
+        const identityQuery = normalizedEmail && normalizedUsername
+            ? { $or: [{ email: normalizedEmail }, { username: normalizedUsername }] }
+            : normalizedEmail
+                ? { email: normalizedEmail }
+                : { username: normalizedUsername }
+        const user = await Auth.findOne(identityQuery)
             .select("+password")
+            .lean()
 
         if (!user) {
             return res.status(400).json({
@@ -142,7 +155,7 @@ const login = async (req, res) => {
         })
 
     } catch (e) {
-        console.log(e.message)
+        console.error(e.message)
 
         return res.status(500).json({
             message: "Something went wrong"
@@ -151,24 +164,10 @@ const login = async (req, res) => {
 }
 
 const me = async (req, res) => {
-    try {
-        const token = req.cookies.token
-        if (!token) {
-            return res.status(401).json({ message: "Not authenticated" })
-        }
-
-        const decoded = JWT.verify(token, process.env.JWT_SECRETE)
-        const user = await Auth.findById(decoded.id)
-        if (!user) {
-            return res.status(401).json({ message: "Not authenticated" })
-        }
-
-        return res.status(200).json({
-            user: { id: user._id, name: user.name, username: user.username, email: user.email, xp: user.xp || 0 }
-        })
-    } catch (e) {
-        return res.status(401).json({ message: "Not authenticated" })
-    }
+    const user = req.user
+    return res.status(200).json({
+        user: { id: user._id, name: user.name, username: user.username, email: user.email, xp: user.xp || 0 }
+    })
 }
 
 const logout = (req, res) => {
@@ -183,33 +182,82 @@ const logout = (req, res) => {
 
 const getLeaderboard = async (req, res) => {
     try {
-        const users = await Auth.find({}, { name: 1, username: 1, xp: 1, createdAt: 1 }).sort({ xp: -1, createdAt: -1 })
+        const page = Number(req.query.page || 1)
+        const limit = Number(req.query.limit || 50)
 
-        const leaderboard = await Promise.all(
-            users.map(async (user) => {
-                const [totalWords, learnedWords] = await Promise.all([
-                    Word.countDocuments({ owner: user._id }),
-                    Word.countDocuments({ owner: user._id, learned: true })
-                ])
+        if (!Number.isSafeInteger(page) || page < 1 || page > 10000) {
+            return res.status(400).json({ message: "Page must be a positive integer" })
+        }
+        if (!Number.isSafeInteger(limit) || limit < 1 || limit > 100) {
+            return res.status(400).json({ message: "Limit must be between 1 and 100" })
+        }
 
-                return {
-                    id: user._id,
-                    name: user.name,
-                    username: user.username,
-                    xp: user.xp || 0,
-                    totalWords,
-                    learnedWords
+        const users = await Auth.aggregate([
+            {
+                $lookup: {
+                    from: Word.collection.name,
+                    let: { userId: "$_id" },
+                    pipeline: [
+                        { $match: { $expr: { $eq: ["$owner", "$$userId"] } } },
+                        {
+                            $group: {
+                                _id: null,
+                                totalWords: { $sum: 1 },
+                                learnedWords: {
+                                    $sum: { $cond: [{ $eq: ["$learned", true] }, 1, 0] }
+                                }
+                            }
+                        }
+                    ],
+                    as: "wordStats"
                 }
-            })
+            },
+            {
+                $set: {
+                    wordStats: {
+                        $ifNull: [
+                            { $arrayElemAt: ["$wordStats", 0] },
+                            { totalWords: 0, learnedWords: 0 }
+                        ]
+                    }
+                }
+            },
+            {
+                $sort: {
+                    "wordStats.learnedWords": -1,
+                    "wordStats.totalWords": -1,
+                    xp: -1,
+                    createdAt: -1
+                }
+            },
+            { $skip: (page - 1) * limit },
+            { $limit: limit + 1 },
+            {
+                $project: {
+                    _id: 0,
+                    id: "$_id",
+                    name: 1,
+                    username: 1,
+                    xp: { $ifNull: ["$xp", 0] },
+                    totalWords: "$wordStats.totalWords",
+                    learnedWords: "$wordStats.learnedWords"
+                }
+            }
+        ]).allowDiskUse(true)
+        const hasMore = users.length > limit
+        if (hasMore) {
+            users.pop()
+        }
+        res.set("X-Has-More", String(hasMore))
+
+        return res.status(200).json(
+            users.map((user, index) => ({
+                ...user,
+                rank: (page - 1) * limit + index + 1
+            }))
         )
-
-        const sortedLeaderboard = leaderboard
-            .sort((a, b) => b.learnedWords - a.learnedWords || b.totalWords - a.totalWords || b.xp - a.xp)
-            .map((user, index) => ({ ...user, rank: index + 1 }))
-
-        return res.status(200).json(sortedLeaderboard)
     } catch (e) {
-        console.log(e.message)
+        console.error(e.message)
 
         return res.status(500).json({
             message: "Something went wrong"

@@ -75,7 +75,7 @@ const lessonSchema = new mongoose.Schema(
     }
 )
 
-lessonSchema.index({ order: 1 })
+lessonSchema.index({ order: 1, createdAt: 1, _id: 1 })
 
 const Lesson = mongoose.models.Lesson || mongoose.model("Lesson", lessonSchema)
 

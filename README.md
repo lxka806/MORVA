@@ -46,21 +46,34 @@ cd MORVA
 
 ### 3. Install Dependencies
 
-If the project uses npm:
+Install the frontend and backend dependencies separately:
 
 ```bash
+cd frontend
+npm install
+cd ../backend
 npm install
 ```
 
-### 4. Start the Development Server
+### 4. Configure and Start
+
+Set `MONGODB_URL` and `JWT_SECRETE` in the backend environment, then run:
 
 ```bash
+cd backend
+npm start
+```
+
+Set the frontend `VITE_API_URL` to the backend URL, then start the frontend in a second terminal:
+
+```bash
+cd frontend
 npm run dev
 ```
 
-Open the local URL shown in your terminal.
+The backend also accepts `PORT` (default `3000`), `MONGO_MAX_POOL_SIZE` (default `10`), `SLOW_REQUEST_THRESHOLD_MS` (default `500`), and `SLOW_DB_THRESHOLD_MS` (default `100`). Keep environment files out of source control.
 
-> **Note:** These commands assume the repository has a `package.json` with the corresponding scripts. Adjust them if your project uses a different setup.
+Run backend tests with `cd backend && npm test`.
 
 ## Project Goals
 

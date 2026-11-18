@@ -36,13 +36,13 @@ function NavBar() {
     ];
 
     return (
-        <header className="sticky top-0 z-50 bg-white border-b border-[#D9D4C7]">
+        <header className="sticky top-0 z-50 bg-[#111111]/95 backdrop-blur-md border-b border-[#33302B]">
             <nav className="max-w-[1400px] mx-auto px-4 sm:px-6 py-3 sm:py-4">
                 <div className="flex items-center justify-between">
                     {/* Logo - Left */}
                     <div className="flex-shrink-0">
-                        <Link to="/" onClick={closeMobileMenu}>
-                            <h1 className="text-xl sm:text-2xl font-bold tracking-[3px] text-[#111111]">
+                        <Link to="/" onClick={closeMobileMenu} className="group inline-block">
+                            <h1 className="font-serif text-xl sm:text-2xl font-semibold tracking-[3px] text-[#F5F2EB] group-hover:text-[#D6A85F] transition-colors">
                                 MORVA
                             </h1>
                         </Link>
@@ -54,7 +54,7 @@ function NavBar() {
                             <Link
                                 key={link.to}
                                 to={link.to}
-                                className="flex items-center gap-2 px-2 lg:px-3 py-2 rounded-lg text-[#77736A] hover:bg-[#F5F1E8] hover:text-[#111111] transition text-sm lg:text-base whitespace-nowrap"
+                                className="flex items-center gap-2 px-2 lg:px-3 py-2 rounded-lg text-[#A7A29A] hover:bg-[#202020] hover:text-[#F5F2EB] transition text-sm lg:text-base whitespace-nowrap focus:outline-none focus:ring-2 focus:ring-[#D6A85F]/40"
                             >
                                 {link.icon}
                                 <span>{link.label}</span>
@@ -67,7 +67,7 @@ function NavBar() {
                         {!loading && user ? (
                             <Link
                                 to="/profile"
-                                className="flex items-center gap-2 px-3 lg:px-4 py-2 rounded-lg bg-[#F5F1E8] text-[#111111] hover:bg-[#C8A96A] transition text-sm lg:text-base"
+                                className="flex items-center gap-2 px-3 lg:px-4 py-2 rounded-lg bg-[#202020] border border-[#33302B] text-[#F5F2EB] hover:border-[#D6A85F]/60 hover:text-[#D6A85F] transition text-sm lg:text-base focus:outline-none focus:ring-2 focus:ring-[#D6A85F]/40"
                             >
                                 <User size={18} />
                                 <span>Profile</span>
@@ -76,14 +76,14 @@ function NavBar() {
                             <>
                                 <Link
                                     to="/login"
-                                    className="flex items-center gap-2 px-3 lg:px-4 py-2 rounded-lg text-[#111111] hover:bg-[#F5F1E8] transition text-sm lg:text-base"
+                                    className="flex items-center gap-2 px-3 lg:px-4 py-2 rounded-lg text-[#F5F2EB] hover:bg-[#202020] hover:text-[#D6A85F] transition text-sm lg:text-base focus:outline-none focus:ring-2 focus:ring-[#D6A85F]/40"
                                 >
                                     <LogIn size={18} />
                                     <span>Login</span>
                                 </Link>
                                 <Link
                                     to="/register"
-                                    className="flex items-center gap-2 px-3 lg:px-4 py-2 rounded-lg bg-[#111111] text-white hover:bg-[#C8A96A] hover:text-[#111111] transition text-sm lg:text-base"
+                                    className="flex items-center gap-2 px-3 lg:px-4 py-2 rounded-lg bg-[#D6A85F] text-[#111111] font-semibold hover:bg-[#B88B47] transition text-sm lg:text-base focus:outline-none focus:ring-2 focus:ring-[#D6A85F] focus:ring-offset-2 focus:ring-offset-[#111111]"
                                 >
                                     <UserPlus size={18} />
                                     <span>Register</span>
@@ -95,13 +95,13 @@ function NavBar() {
                     {/* Mobile Menu Button */}
                     <button
                         onClick={toggleMobileMenu}
-                        className="md:hidden p-2 rounded-lg hover:bg-[#F5F1E8] transition"
+                        className="md:hidden p-2 rounded-lg text-[#F5F2EB] hover:bg-[#202020] hover:text-[#D6A85F] transition focus:outline-none focus:ring-2 focus:ring-[#D6A85F]/40"
                         aria-label="Toggle menu"
                     >
                         {isMobileMenuOpen ? (
-                            <X size={24} className="text-[#111111]" />
+                            <X size={24} />
                         ) : (
-                            <Menu size={24} className="text-[#111111]" />
+                            <Menu size={24} />
                         )}
                     </button>
                 </div>
@@ -112,13 +112,13 @@ function NavBar() {
                         isMobileMenuOpen ? "max-h-[600px] opacity-100" : "max-h-0 opacity-0"
                     }`}
                 >
-                    <div className="pt-4 pb-3 border-t border-[#D9D4C7] mt-3 space-y-1">
+                    <div className="pt-4 pb-3 border-t border-[#33302B] mt-3 space-y-1">
                         {navLinks.map((link) => (
                             <Link
                                 key={link.to}
                                 to={link.to}
                                 onClick={closeMobileMenu}
-                                className="flex items-center gap-3 px-3 py-3 rounded-lg text-[#77736A] hover:bg-[#F5F1E8] hover:text-[#111111] transition text-sm"
+                                className="flex items-center gap-3 px-3 py-3 rounded-lg text-[#A7A29A] hover:bg-[#202020] hover:text-[#F5F2EB] transition text-sm"
                             >
                                 {link.icon}
                                 <span>{link.label}</span>
@@ -126,12 +126,12 @@ function NavBar() {
                         ))}
 
                         {/* Mobile Auth Links */}
-                        <div className="pt-3 mt-2 border-t border-[#D9D4C7]">
+                        <div className="pt-3 mt-2 border-t border-[#33302B]">
                             {!loading && user ? (
                                 <Link
                                     to="/profile"
                                     onClick={closeMobileMenu}
-                                    className="flex items-center gap-3 px-3 py-3 rounded-lg bg-[#F5F1E8] text-[#111111] hover:bg-[#C8A96A] transition text-sm"
+                                    className="flex items-center gap-3 px-3 py-3 rounded-lg bg-[#202020] border border-[#33302B] text-[#F5F2EB] hover:border-[#D6A85F]/60 hover:text-[#D6A85F] transition text-sm"
                                 >
                                     <User size={18} />
                                     <span>Profile</span>
@@ -141,7 +141,7 @@ function NavBar() {
                                     <Link
                                         to="/login"
                                         onClick={closeMobileMenu}
-                                        className="flex items-center gap-3 px-3 py-3 rounded-lg text-[#111111] hover:bg-[#F5F1E8] transition text-sm"
+                                        className="flex items-center gap-3 px-3 py-3 rounded-lg text-[#F5F2EB] hover:bg-[#202020] hover:text-[#D6A85F] transition text-sm"
                                     >
                                         <LogIn size={18} />
                                         <span>Login</span>
@@ -149,7 +149,7 @@ function NavBar() {
                                     <Link
                                         to="/register"
                                         onClick={closeMobileMenu}
-                                        className="flex items-center gap-3 px-3 py-3 rounded-lg bg-[#111111] text-white hover:bg-[#C8A96A] hover:text-[#111111] transition text-sm"
+                                        className="flex items-center gap-3 px-3 py-3 rounded-lg bg-[#D6A85F] text-[#111111] font-semibold hover:bg-[#B88B47] transition text-sm"
                                     >
                                         <UserPlus size={18} />
                                         <span>Register</span>

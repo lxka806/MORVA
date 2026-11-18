@@ -2,45 +2,61 @@ import { useEffect, useState } from "react"
 import { AuthContext } from "./authContext"
 
 const API_URL = import.meta.env.VITE_API_URL
+const normalizeUser = (userData) => {
+    if (!userData) {
+        return null
+    }
+
+    return {
+        ...userData,
+        username: userData.username ?? userData.userName ?? "",
+        name: userData.name ?? "User",
+        email: userData.email ?? ""
+    }
+}
+
+const getCurrentUser = async (signal) => {
+    try {
+        const response = await fetch(`${API_URL}/api/auth/me`, {
+            credentials: "include",
+            signal
+        })
+        if (!response.ok) {
+            return null
+        }
+
+        const data = await response.json()
+        return normalizeUser(data?.user ?? null)
+    } catch {
+        return null
+    }
+}
+
 export function AuthProvider({ children }) {
     const [user, setUser] = useState(null)
     const [loading, setLoading] = useState(true)
 
-    const normalizeUser = (userData) => {
-        if (!userData) {
-            return null
-        }
-
-        return {
-            ...userData,
-            username: userData.username ?? userData.userName ?? "",
-            name: userData.name ?? "User",
-            email: userData.email ?? ""
-        }
-    }
-
     const refreshUser = async () => {
-        try {
-            const response = await fetch(`${API_URL}/api/auth/me`, { credentials: "include" })
-            const data = response.ok ? await response.json() : null
-            setUser(normalizeUser(data?.user ?? null))
-            return normalizeUser(data?.user ?? null)
-        } catch {
-            setUser(null)
-            return null
-        }
+        const currentUser = await getCurrentUser()
+        setUser(currentUser)
+        return currentUser
     }
 
     useEffect(() => {
-        refreshUser().finally(() => setLoading(false))
+        const controller = new AbortController()
+        getCurrentUser(controller.signal).then((currentUser) => {
+            if (!controller.signal.aborted) {
+                setUser(currentUser)
+                setLoading(false)
+            }
+        })
+
+        return () => {
+            controller.abort()
+        }
     }, [])
 
     const login = (loggedInUser) => {
-        if (!loggedInUser) {
-            setUser(null)
-            return
-        }
-
         setUser(normalizeUser(loggedInUser))
     }
 

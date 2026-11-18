@@ -13,7 +13,7 @@ const protect = require("../middleware/protect")
 
 authRouter.post("/register", register)
 authRouter.post("/login", login)
-authRouter.get("/me", me)
+authRouter.get("/me", protect, me)
 authRouter.post("/logout", logout)
 authRouter.get("/leaderboard", protect, getLeaderboard)
 

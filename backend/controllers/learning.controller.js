@@ -1,21 +1,24 @@
+const mongoose = require("mongoose")
 const Lesson = require("../models/learning.model")
 const Progress = require("../models/progress.model")
 const Auth = require("../models/auth.model")
 
 const createLesson = async (req, res) => {
     try {
-        const { title, description, order, letters, exercises } = req.body
+        const { title, description, order, letters, exercises } = req.body || {}
+        const normalizedTitle = typeof title === "string" ? title.trim() : ""
+        const lessonOrder = Number(order)
 
-        if (!title || order === undefined || order === null) {
+        if (!normalizedTitle || order === undefined || order === null || !Number.isFinite(lessonOrder)) {
             return res.status(400).json({
-                message: "Title and order are required"
+                message: "A title and valid order are required"
             })
         }
 
         const lesson = await Lesson.create({
-            title,
+            title: normalizedTitle,
             description: description || "",
-            order: Number(order),
+            order: lessonOrder,
             letters: Array.isArray(letters) ? letters : [],
             exercises: Array.isArray(exercises) ? exercises : []
         })
@@ -25,24 +28,36 @@ const createLesson = async (req, res) => {
             lesson
         })
     } catch (error) {
-        console.log(error.message)
+        if (error.name === "ValidationError") {
+            return res.status(400).json({ message: error.message })
+        }
+        console.error(error.message)
         return res.status(500).json({ message: "Something went wrong" })
     }
 }
 
 const getLessons = async (req, res) => {
     try {
-        const lessons = await Lesson.find().sort({ order: 1, createdAt: 1 })
+        const lessons = await Lesson.find()
+            .select("_id title description order")
+            .sort({ order: 1, createdAt: 1, _id: 1 })
+            .lean()
         return res.status(200).json({ lessons })
     } catch (error) {
-        console.log(error.message)
+        console.error(error.message)
         return res.status(500).json({ message: "Something went wrong" })
     }
 }
 
 const getLesson = async (req, res) => {
     try {
+        if (!mongoose.isValidObjectId(req.params.id)) {
+            return res.status(404).json({ message: "Lesson not found" })
+        }
+
         const lesson = await Lesson.findById(req.params.id)
+            .select("_id title description order letters exercises createdAt updatedAt")
+            .lean()
 
         if (!lesson) {
             return res.status(404).json({ message: "Lesson not found" })
@@ -50,148 +65,202 @@ const getLesson = async (req, res) => {
 
         return res.status(200).json({ lesson })
     } catch (error) {
-        console.log(error.message)
+        console.error(error.message)
         return res.status(500).json({ message: "Something went wrong" })
     }
 }
 
 const updateLesson = async (req, res) => {
     try {
-        const lesson = await Lesson.findById(req.params.id)
-
-        if (!lesson) {
+        const { id } = req.params
+        if (!mongoose.isValidObjectId(id)) {
             return res.status(404).json({ message: "Lesson not found" })
         }
 
-        const fieldsToUpdate = req.body
-
-        Object.keys(fieldsToUpdate).forEach((key) => {
-            if (fieldsToUpdate[key] !== undefined) {
-                lesson[key] = key === "order" ? Number(fieldsToUpdate[key]) : fieldsToUpdate[key]
+        const body = req.body || {}
+        const fieldsToUpdate = {}
+        if (body.title !== undefined) {
+            if (typeof body.title !== "string" || !body.title.trim()) {
+                return res.status(400).json({ message: "Title must be a non-empty string" })
             }
-        })
+            fieldsToUpdate.title = body.title.trim()
+        }
+        if (body.description !== undefined) {
+            if (typeof body.description !== "string") {
+                return res.status(400).json({ message: "Description must be a string" })
+            }
+            fieldsToUpdate.description = body.description
+        }
+        if (body.order !== undefined) {
+            const order = Number(body.order)
+            if (!Number.isFinite(order)) {
+                return res.status(400).json({ message: "Order must be a number" })
+            }
+            fieldsToUpdate.order = order
+        }
+        if (body.letters !== undefined) {
+            if (!Array.isArray(body.letters)) {
+                return res.status(400).json({ message: "Letters must be an array" })
+            }
+            fieldsToUpdate.letters = body.letters
+        }
+        if (body.exercises !== undefined) {
+            if (!Array.isArray(body.exercises)) {
+                return res.status(400).json({ message: "Exercises must be an array" })
+            }
+            fieldsToUpdate.exercises = body.exercises
+        }
+        if (Object.keys(fieldsToUpdate).length === 0) {
+            return res.status(400).json({ message: "At least one lesson field is required" })
+        }
 
-        await lesson.save()
+        const lesson = await Lesson.findByIdAndUpdate(id, fieldsToUpdate, {
+            new: true,
+            runValidators: true
+        })
+            .select("_id title description order letters exercises createdAt updatedAt")
+            .lean()
+        if (!lesson) {
+            return res.status(404).json({ message: "Lesson not found" })
+        }
 
         return res.status(200).json({
             message: "Lesson updated successfully",
             lesson
         })
     } catch (error) {
-        console.log(error.message)
+        if (error.name === "ValidationError" || error.name === "CastError") {
+            return res.status(400).json({ message: error.message })
+        }
+        console.error(error.message)
         return res.status(500).json({ message: "Something went wrong" })
     }
 }
 
 const deleteLesson = async (req, res) => {
     try {
-        const lesson = await Lesson.findById(req.params.id)
+        if (!mongoose.isValidObjectId(req.params.id)) {
+            return res.status(404).json({ message: "Lesson not found" })
+        }
+
+        const lesson = await Lesson.findById(req.params.id).select("_id").lean()
 
         if (!lesson) {
             return res.status(404).json({ message: "Lesson not found" })
         }
 
         await Progress.deleteMany({ lesson: lesson._id })
-        await lesson.deleteOne()
+        await Lesson.deleteOne({ _id: lesson._id })
 
         return res.status(200).json({ message: "Lesson deleted successfully" })
     } catch (error) {
-        console.log(error.message)
+        console.error(error.message)
         return res.status(500).json({ message: "Something went wrong" })
     }
 }
 
 const completeLesson = async (req, res) => {
     try {
-        const lesson = await Lesson.findById(req.params.id)
+        const { id } = req.params
+        if (!mongoose.isValidObjectId(id)) {
+            return res.status(404).json({ message: "Lesson not found" })
+        }
 
+        const lesson = await Lesson.exists({ _id: id })
         if (!lesson) {
             return res.status(404).json({ message: "Lesson not found" })
         }
 
-        const existingProgress = await Progress.findOne({
-            user: req.user._id,
-            lesson: lesson._id
-        })
+        const progressFields = {
+            completed: true,
+            score: 100,
+            completedAt: new Date()
+        }
+        let progress = await Progress.findOneAndUpdate(
+            { user: req.user._id, lesson: id, completed: { $ne: true } },
+            { $set: progressFields },
+            { new: true }
+        )
+            .select("lesson completed score")
+            .lean()
 
-        if (existingProgress && existingProgress.completed) {
-            const user = await Auth.findById(req.user._id)
+        if (!progress) {
+            try {
+                progress = await Progress.create({
+                    user: req.user._id,
+                    lesson: id,
+                    ...progressFields
+                })
+            } catch (error) {
+                if (error.code !== 11000) {
+                    throw error
+                }
 
-            return res.status(200).json({
-                message: "Lesson already completed",
-                xpEarned: 0,
-                totalXP: user?.xp || 0
-            })
+                const user = await Auth.findById(req.user._id).select("xp").lean()
+                return res.status(200).json({
+                    message: "Lesson already completed",
+                    xpEarned: 0,
+                    totalXP: user?.xp || 0
+                })
+            }
         }
 
-        const progress = await Progress.findOneAndUpdate(
-            { user: req.user._id, lesson: lesson._id },
-            {
-                user: req.user._id,
-                lesson: lesson._id,
-                completed: true,
-                score: 100,
-                completedAt: new Date()
-            },
-            { upsert: true, new: true, setDefaultsOnInsert: true }
+        const user = await Auth.findByIdAndUpdate(
+            req.user._id,
+            { $inc: { xp: 100 } },
+            { new: true }
         )
-
-        const user = await Auth.findById(req.user._id)
-        const nextXP = Number(user?.xp || 0) + 100
-
-        user.xp = nextXP
-        await user.save()
+            .select("xp")
+            .lean()
 
         return res.status(200).json({
             message: "Lesson completed",
             xpEarned: 100,
-            totalXP: nextXP,
+            totalXP: user?.xp || 0,
             progress: {
-                lesson: lesson._id,
+                lesson: progress.lesson,
                 completed: progress.completed,
                 score: progress.score
             }
         })
     } catch (error) {
-        console.log(error.message)
+        console.error(error.message)
         return res.status(500).json({ message: "Something went wrong" })
     }
 }
 
 const getUserProgress = async (req, res) => {
     try {
-        const userProgress = await Progress.find({ user: req.user._id })
-            .populate("lesson", "title")
-            .sort({ createdAt: -1 })
-
-        const user = await Auth.findById(req.user._id)
+        const [userProgress, lessons, user] = await Promise.all([
+            Progress.find({ user: req.user._id })
+                .select("lesson completed score")
+                .lean(),
+            Lesson.find()
+                .select("_id title")
+                .sort({ order: 1, createdAt: 1, _id: 1 })
+                .lean(),
+            Auth.findById(req.user._id).select("xp").lean()
+        ])
+        const progressByLesson = new Map(
+            userProgress.map((item) => [item.lesson.toString(), item])
+        )
         const completedLessons = userProgress.filter((item) => item.completed).length
-
-        const lessons = await Lesson.find().sort({ order: 1, createdAt: 1 })
-
         const progress = lessons.map((lesson) => {
-            const record = userProgress.find((item) => 
-                item.lesson && item.lesson._id.toString() === lesson._id.toString()
-            )
-
+            const record = progressByLesson.get(lesson._id.toString())
             return {
                 lesson: lesson.title,
-                completed: !!record?.completed,
+                completed: Boolean(record?.completed),
                 score: record?.score || 0
             }
         })
 
-        // Make sure user.xp exists and is a number
-        const userXP = user?.xp || 0;
-        console.log("User XP:", userXP); // Debug log
-
         return res.status(200).json({
-            xp: userXP,
+            xp: user?.xp || 0,
             completedLessons,
             progress
         })
     } catch (error) {
-        console.log(error.message)
+        console.error(error.message)
         return res.status(500).json({ message: "Something went wrong" })
     }
 }

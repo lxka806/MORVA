@@ -8,14 +8,22 @@ const originalFindOneAndUpdate = Words.findOneAndUpdate;
 
 test('editWords keeps learned status when updating a word', async () => {
   let captured = null;
+  const id = '0123456789abcdef01234567';
 
-  Words.findOneAndUpdate = async (filter, update, options) => {
+  Words.findOneAndUpdate = (filter, update, options) => {
     captured = { filter, update, options };
-    return { _id: 'abc123', word: 'hello', learned: true };
+    return {
+      select() {
+        return this;
+      },
+      async lean() {
+        return { _id: id, word: 'hello', learned: true };
+      }
+    };
   };
 
   const req = {
-    params: { id: 'abc123' },
+    params: { id },
     user: { _id: 'user123' },
     body: { learned: true }
   };
